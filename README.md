@@ -179,33 +179,99 @@ Why a struct:
 
 Once the struct is filled, the conversion character selects the function that
 prints it. Instead of a long chain of `if` (`switch` is forbidden by the Norm),
-the handlers are stored in a `static const` array of function pointers, indexed
-directly by the conversion character:
+the list of supported conversions is a single string, the `CONVERSION` macro in
+`ft_printf.h`, and the handlers are stored in a `static const` array of function
+pointers **in the same order** (`handlers.c`):
 
 ```c
-static const t_handler	g_handlers[128] = {
-['c'] = handle_char,
-['s'] = handle_string,
-['d'] = handle_signed,
-/* ... */
-};
+# define CONVERSION "cspdiuxX%"
+
+static const t_handler	handlers[] = {print_char, print_str, print_ptr,
+	print_int, print_int, print_uint, print_hex, print_hex, print_percent};
 ```
 
+The handler of the conversion `CONVERSION[i]` is `handlers[i]`. To find it,
+`ft_strchr` looks for the character in `CONVERSION`, and the position is the
+pointer difference:
+
+```c
+found = ft_strchr(CONVERSION, c);
+return (handlers[found - CONVERSION]);
+```
+
+- The parser (`check_n_store_conversion`) uses the same macro to decide if a
+  character is a valid conversion, so the list of conversions is written in
+  one place only.
+- `'\0'` is checked **before** calling `ft_strchr`: `ft_strchr(s, '\0')` returns
+  a pointer to the terminator, not `NULL`, so a format ending with `%` would be
+  taken as a valid conversion.
 - Every handler has the same prototype (it receives a pointer to the `va_list`
   and a pointer to the struct, and returns the number of characters written), so
   they can all live in one table. The function pointer type `t_handler` is
   declared with a `typedef` in `ft_printf.h`.
-- Calling a handler is a single array access: no list of comparisons to walk
-  through.
-- Empty slots are `NULL`. Before calling, the index is checked to be inside the
-  table (`0`–`127`) and the slot non-`NULL`; otherwise the conversion is unknown.
-- **Easy to extend:** supporting a new conversion means adding one line to the
-  table.
 - The table is `static const`, which the Norm allows (only non-`const`,
-  non-`static` global variables are forbidden); norminette reports a notice,
-  not an error.
+  non-`static` global variables are forbidden).
 - The `va_list` is passed by address (`va_list *`): when a handler calls
   `va_arg`, the caller's list advances too.
+
+### Adding or removing a conversion
+
+A conversion is defined in **two places**, which must stay in the same order:
+
+1. its letter in the `CONVERSION` macro (`ft_printf.h`);
+2. its handler at the same position in the `handlers[]` array (`handlers.c`).
+
+**To add a conversion**, for example `%b` (unsigned number in binary):
+
+1. Write the handler with the `t_handler` prototype, in its own file or in an
+   existing one (for example `print_nbr.c`):
+
+   ```c
+   int	print_bin(va_list *ap, t_struct *conv)
+   {
+   	/* read the argument with va_arg(*ap, ...), apply the flags stored
+   	   in conv, print, and return the number of characters written
+   	   (or -1 on error) */
+   }
+   ```
+
+2. Declare it in `ft_printf.h`, in the `// printer` section:
+
+   ```c
+   int			print_bin(va_list *ap, t_struct *conv);
+   ```
+
+3. Add the letter to the macro (here at the end):
+
+   ```c
+   # define CONVERSION "cspdiuxX%b"
+   ```
+
+4. Add the handler at the **same position** in `handlers[]`:
+
+   ```c
+   static const t_handler	handlers[] = {print_char, print_str, print_ptr,
+   	print_int, print_int, print_uint, print_hex, print_hex, print_percent,
+   	print_bin};
+   ```
+
+5. If the handler is in a new file, add it to `SRCS` in the `Makefile`.
+6. Run `make re` and test the new conversion, including with the flags,
+   width and precision.
+
+If the conversion only needs a new base, `ft_utoa_base` and `get_digits`
+(`number_utils.c`) already take the digits as a string, so `%b` can reuse them
+with `"01"` (add a `BINARY` macro next to `DECIMAL` and `HEX_LOWER`).
+
+**To remove a conversion**, do the opposite: remove its letter from
+`CONVERSION` and its handler at the same position in `handlers[]`. Then remove
+the handler, its prototype and its file in the `Makefile` if nothing else uses
+them.
+
+> **Warning:** if `CONVERSION` and `handlers[]` do not have the same number of
+> entries, `handlers[found - CONVERSION]` can read outside the array (undefined
+> behaviour, often a crash). If the order is different, a conversion is printed
+> by the wrong handler. Check both every time you change one.
 
 **Length modifiers (optional extension).** A length modifier such as `z` in `%zu`
 is not a conversion and has no entry in the table: the parser stores it in the

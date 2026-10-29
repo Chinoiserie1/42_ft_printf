@@ -6,7 +6,7 @@
 /*   By: jlucotte <jlucotte@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/23 12:27:28 by jlucotte          #+#    #+#             */
-/*   Updated: 2026/10/23 14:57:50 by jlucotte         ###   ########.fr       */
+/*   Updated: 2026/10/29 14:37:43 by jlucotte         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,23 +89,8 @@ int	check_n_store_length(t_struct *conversion, const char *str)
 
 int	check_n_store_conversion(t_struct *conversion, char c)
 {
-	if (c == 'c')
-		return (conversion->conversion = 'c', 1);
-	if (c == 's')
-		return (conversion->conversion = 's', 1);
-	if (c == 'p')
-		return (conversion->conversion = 'p', 1);
-	if (c == 'd')
-		return (conversion->conversion = 'd', 1);
-	if (c == 'i')
-		return (conversion->conversion = 'i', 1);
-	if (c == 'u')
-		return (conversion->conversion = 'u', 1);
-	if (c == 'x')
-		return (conversion->conversion = 'x', 1);
-	if (c == 'X')
-		return (conversion->conversion = 'X', 1);
-	if (c == '%')
-		return (conversion->conversion = '%', 1);
-	return (0);
+	if (c == '\0' || !ft_strchr(CONVERSION, c))
+		return (0);
+	conversion->conversion = c;
+	return (1);
 }

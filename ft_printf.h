@@ -6,7 +6,7 @@
 /*   By: jlucotte <jlucotte@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/21 20:22:24 by jlucotte          #+#    #+#             */
-/*   Updated: 2026/10/27 12:00:00 by jlucotte         ###   ########.fr       */
+/*   Updated: 2026/10/29 14:32:56 by jlucotte         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@
 # define LEN_Z    5
 # define LEN_J    6
 # define LEN_T    7
+
+# define CONVERSION "cspdiuxX%"
 
 # define DECIMAL "0123456789"
 # define HEX_LOWER "0123456789abcdef"
