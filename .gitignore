@@ -1,0 +1,5 @@
+*.o
+*.a
+test_mandatory
+test_bonus
+.DS_Store
